@@ -38,6 +38,7 @@ const App: React.FC = () => {
   // Swipe gesture for brightness
   const touchStartRef = useRef<{ x: number, y: number } | null>(null);
   const initialBrightnessRef = useRef<number>(1.0);
+  const isSwipingRef = useRef<boolean>(false);
 
   // --- WAKE LOCK (Keep Screen On) ---
   const requestWakeLock = useCallback(async () => {
@@ -230,12 +231,27 @@ const App: React.FC = () => {
     const touch = e.touches[0];
     touchStartRef.current = { x: touch.clientX, y: touch.clientY };
     initialBrightnessRef.current = config.brightness;
+    isSwipingRef.current = false;
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!touchStartRef.current) return;
 
     const touch = e.touches[0];
+
+    // Check threshold to avoid triggering on taps
+    if (!isSwipingRef.current) {
+      const moveY = Math.abs(touch.clientY - touchStartRef.current.y);
+      const moveX = Math.abs(touch.clientX - touchStartRef.current.x);
+
+      // Threshold of 15px to consider it a swipe
+      if (moveY > 15 || moveX > 15) {
+        isSwipingRef.current = true;
+      } else {
+        return; // Ignore micro movements
+      }
+    }
+
     // Check if swipe started on the right side ( > 60% of width )
     const isRightSide = touchStartRef.current.x > window.innerWidth * 0.6;
 
@@ -260,6 +276,7 @@ const App: React.FC = () => {
 
   const handleTouchEnd = () => {
     touchStartRef.current = null;
+    isSwipingRef.current = false;
   };
 
   return (
