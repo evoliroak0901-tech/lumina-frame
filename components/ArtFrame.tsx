@@ -69,7 +69,7 @@ const ArtFrame: React.FC<ArtFrameProps> = ({ imageUrl, loading, frameStyle, filt
   const matteStyle = frameStyle !== FrameStyle.None ? "p-[2vmin] md:p-[4vmin] bg-transparent" : "";
 
   return (
-    <div className={`w-full h-full flex items-center justify-center ${frameStyle === FrameStyle.None ? '' : 'p-4 md:p-12'}`}>
+    <div className="w-full h-full flex items-center justify-center">
       <div className={frameClasses}>
         <div className={`w-full h-full relative flex items-center justify-center ${matteStyle}`}>
           {/* Image Container - fullscreen landscape display */}
