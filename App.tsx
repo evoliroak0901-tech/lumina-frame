@@ -40,17 +40,18 @@ const App: React.FC = () => {
   const initialBrightnessRef = useRef<number>(1.0);
 
   // --- WAKE LOCK (Keep Screen On) ---
-  useEffect(() => {
-    const requestWakeLock = async () => {
-      try {
-        if ('wakeLock' in navigator) {
-          wakeLockRef.current = await navigator.wakeLock.request('screen');
-        }
-      } catch (err) {
-        // Wake lock might be blocked by policy or battery saver
+  const requestWakeLock = useCallback(async () => {
+    try {
+      if ('wakeLock' in navigator && !wakeLockRef.current) {
+        wakeLockRef.current = await navigator.wakeLock.request('screen');
       }
-    };
+    } catch (err) {
+      // Wake lock might be blocked by policy or battery saver
+      console.log('Wake Lock Error:', err);
+    }
+  }, []);
 
+  useEffect(() => {
     requestWakeLock();
 
     // Re-acquire on visibility change (e.g. switching tabs/apps)
@@ -64,8 +65,9 @@ const App: React.FC = () => {
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       wakeLockRef.current?.release();
+      wakeLockRef.current = null;
     };
-  }, []);
+  }, [requestWakeLock]);
 
   // --- IMAGE LOADING LOGIC ---
   const loadNewImage = useCallback(async () => {
@@ -152,6 +154,9 @@ const App: React.FC = () => {
 
   // --- USER INTERACTION ---
   const handleInteraction = (e: React.MouseEvent) => {
+    // Ensure screen stays on
+    requestWakeLock();
+
     e.persist();
     const clientX = e.clientX;
     const width = window.innerWidth;
@@ -257,6 +262,7 @@ const App: React.FC = () => {
   return (
     <div
       className="relative w-screen h-screen bg-black overflow-hidden cursor-none"
+      style={{ touchAction: 'none' }}
       onClick={handleInteraction}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
