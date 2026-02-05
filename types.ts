@@ -31,6 +31,7 @@ export interface AppConfig {
   frameStyle: FrameStyle;
   filterPreset: FilterPreset;
   frameWidth: number; // px - border width for frames
+  brightness: number; // 0.0 to 2.0 (default 1.0)
 }
 
 export interface ArtImage {

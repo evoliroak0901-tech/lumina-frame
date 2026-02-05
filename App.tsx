@@ -10,7 +10,8 @@ const INITIAL_CONFIG: AppConfig = {
   isSlideshow: false, // Default to single image mode
   frameStyle: FrameStyle.None,
   filterPreset: FilterPreset.Original,
-  frameWidth: 20 // Default frame width in pixels
+  frameWidth: 20, // Default frame width in pixels
+  brightness: 1.0 // Default brightness
 };
 
 const App: React.FC = () => {
@@ -33,6 +34,10 @@ const App: React.FC = () => {
   const lastTapTimeRef = useRef<number>(0);
   const lastTapSideRef = useRef<'left' | 'right' | null>(null);
   const singleTapTimerRef = useRef<number | null>(null);
+
+  // Swipe gesture for brightness
+  const touchStartRef = useRef<{ x: number, y: number } | null>(null);
+  const initialBrightnessRef = useRef<number>(1.0);
 
   // --- WAKE LOCK (Keep Screen On) ---
   useEffect(() => {
@@ -215,10 +220,47 @@ const App: React.FC = () => {
     }
   };
 
+  // --- SWIPE HANDLERS (Brightness) ---
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+    initialBrightnessRef.current = config.brightness;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartRef.current) return;
+
+    const touch = e.touches[0];
+    const deltaY = touchStartRef.current.y - touch.clientY; // Up is positive
+    const deltaX = touch.clientX - touchStartRef.current.x;
+
+    // Check if swipe started on the right side ( > 60% of width )
+    const isRightSide = touchStartRef.current.x > window.innerWidth * 0.6;
+
+    // Brightness Control: Vertical swipe on right side
+    // Threshold: Move sufficient distance to be considered a swipe, and mainly vertical
+    if (isRightSide && Math.abs(deltaY) > 10 && Math.abs(deltaY) > Math.abs(deltaX)) {
+      const change = deltaY / 300; // Sensitivity 
+      let newBrightness = initialBrightnessRef.current + change;
+
+      // Clamp between 0.1 and 2.0
+      newBrightness = Math.max(0.1, Math.min(2.0, newBrightness));
+
+      setConfig(prev => ({ ...prev, brightness: newBrightness }));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchStartRef.current = null;
+  };
+
   return (
     <div
       className="relative w-screen h-screen bg-black overflow-hidden cursor-none"
       onClick={handleInteraction}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
     >
       {/* Main View */}
       <ArtFrame
@@ -227,6 +269,7 @@ const App: React.FC = () => {
         frameStyle={config.frameStyle}
         filterPreset={config.filterPreset}
         frameWidth={config.frameWidth}
+        brightness={config.brightness}
       />
 
       {/* Control Layer */}

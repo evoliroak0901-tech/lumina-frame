@@ -7,9 +7,10 @@ interface ArtFrameProps {
   frameStyle: FrameStyle;
   filterPreset: FilterPreset;
   frameWidth: number;
+  brightness: number;
 }
 
-const ArtFrame: React.FC<ArtFrameProps> = ({ imageUrl, loading, frameStyle, filterPreset, frameWidth }) => {
+const ArtFrame: React.FC<ArtFrameProps> = ({ imageUrl, loading, frameStyle, filterPreset, frameWidth, brightness }) => {
 
   // Calculate Frame CSS with dynamic frame width
   const frameClasses = useMemo(() => {
@@ -68,8 +69,14 @@ const ArtFrame: React.FC<ArtFrameProps> = ({ imageUrl, loading, frameStyle, filt
   // Inner matte styling for Gallery look
   const matteStyle = frameStyle !== FrameStyle.None ? "p-[2vmin] md:p-[4vmin] bg-transparent" : "";
 
+  // Combine preset filters with global brightness
+  // Note: brightness filter on parent might affect everything, usually desired for "screen brightness" simulation
+
   return (
-    <div className="w-full h-full flex items-center justify-center">
+    <div
+      className="w-full h-full flex items-center justify-center transition-[filter] duration-200"
+      style={{ filter: `brightness(${brightness})` }}
+    >
       <div className={frameClasses}>
         <div className={`w-full h-full relative flex items-center justify-center ${matteStyle}`}>
           {/* Image Container - fullscreen landscape display */}
