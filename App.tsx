@@ -19,11 +19,20 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [showControls, setShowControls] = useState<boolean>(false);
 
+  // Image history for back/forward navigation
+  const [imageHistory, setImageHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState<number>(-1);
+
   // Refs for timers and wake lock
   const slideshowTimerRef = useRef<number | null>(null);
   const controlsTimerRef = useRef<number | null>(null);
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
   const isGeneratingRef = useRef<boolean>(false);
+
+  // Double-tap detection
+  const lastTapTimeRef = useRef<number>(0);
+  const lastTapSideRef = useRef<'left' | 'right' | null>(null);
+  const singleTapTimerRef = useRef<number | null>(null);
 
   // --- WAKE LOCK (Keep Screen On) ---
   useEffect(() => {
@@ -67,7 +76,17 @@ const App: React.FC = () => {
       const img = new Image();
       img.src = imageUrl;
       img.onload = () => {
-        setCurrentImage(imageUrl);
+        setCurrentImage((prevImage) => {
+          if (prevImage) {
+            // Update history: truncate any forward history if we were in the middle
+            setImageHistory(prev => {
+              const newHistory = prev.slice(0, historyIndex + 1);
+              return [...newHistory, prevImage];
+            });
+            setHistoryIndex(prev => prev + 1);
+          }
+          return imageUrl;
+        });
         setLoading(false);
         isGeneratingRef.current = false;
       };
@@ -80,7 +99,26 @@ const App: React.FC = () => {
       isGeneratingRef.current = false;
     }
 
-  }, [config.genre]);
+  }, [config.genre, historyIndex]);
+
+  const loadPreviousImage = useCallback(() => {
+    if (historyIndex >= 0 && imageHistory.length > 0) {
+      const prevImage = imageHistory[historyIndex];
+
+      // Save current image to history for forward navigation (technically simply not removing it allows "forward" if we implemented it, 
+      // but here we just want to go back. For full browser-like history, we'd need more complex index management).
+      // For this simple "Back" feature:
+
+      setCurrentImage((current) => {
+        // Push current back to potential "next" slot if we wanted a redo, 
+        // but simple "back" just swaps. 
+        // Actually, standard history: current becomes "next", history[index] becomes current.
+        return prevImage;
+      });
+
+      setHistoryIndex(prev => prev - 1);
+    }
+  }, [historyIndex, imageHistory]);
 
   // --- SLIDESHOW TIMER & INITIAL LOAD ---
   useEffect(() => {
@@ -108,20 +146,67 @@ const App: React.FC = () => {
 
 
   // --- USER INTERACTION ---
-  const handleInteraction = () => {
-    setShowControls(true);
+  const handleInteraction = (e: React.MouseEvent) => {
+    e.persist();
+    const clientX = e.clientX;
+    const width = window.innerWidth;
+    let side: 'left' | 'right' | 'center' = 'center';
 
-    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+    if (clientX < width * 0.35) side = 'left';
+    else if (clientX > width * 0.65) side = 'right';
 
-    // Auto hide after 4 seconds of inactivity
-    controlsTimerRef.current = window.setTimeout(() => {
-      setShowControls(false);
-    }, 4000);
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTapTimeRef.current;
+
+    // Check if this is a Double Tap
+    if (tapLength < 300 && tapLength > 0 && lastTapSideRef.current === side && side !== 'center') {
+      // Double Tap Detected!
+      if (singleTapTimerRef.current) {
+        clearTimeout(singleTapTimerRef.current);
+        singleTapTimerRef.current = null;
+      }
+
+      // Execute Action
+      if (side === 'right') {
+        loadNewImage();
+      } else if (side === 'left') {
+        loadPreviousImage();
+      }
+
+      // Reset
+      lastTapTimeRef.current = 0;
+      lastTapSideRef.current = null;
+    } else {
+      // Potential Single Tap
+      lastTapTimeRef.current = currentTime;
+      lastTapSideRef.current = side;
+
+      // Clear any existing timer just in case
+      if (singleTapTimerRef.current) clearTimeout(singleTapTimerRef.current);
+
+      // Set timer for Single Tap Action
+      singleTapTimerRef.current = window.setTimeout(() => {
+        // Single Tap Action: Toggle/Close Menu
+        if (showControls) {
+          setShowControls(false);
+        } else {
+          setShowControls(true);
+
+          // Auto hide logic for new controls display
+          if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
+          controlsTimerRef.current = window.setTimeout(() => {
+            setShowControls(false);
+          }, 4000);
+        }
+        singleTapTimerRef.current = null;
+      }, 300);
+    }
   };
 
   const updateConfig = (newConfig: Partial<AppConfig>) => {
     setConfig(prev => ({ ...prev, ...newConfig }));
-    handleInteraction(); // Keep controls alive while interacting
+    // Don't auto-hide when interacting with controls
+    if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
 
     // If genre changed, load immediately to give feedback
     if (newConfig.genre && newConfig.genre !== config.genre) {
@@ -134,7 +219,6 @@ const App: React.FC = () => {
     <div
       className="relative w-screen h-screen bg-black overflow-hidden cursor-none"
       onClick={handleInteraction}
-      onTouchStart={handleInteraction}
     >
       {/* Main View */}
       <ArtFrame
