@@ -6,32 +6,34 @@ interface ArtFrameProps {
   loading: boolean;
   frameStyle: FrameStyle;
   filterPreset: FilterPreset;
+  frameWidth: number;
 }
 
-const ArtFrame: React.FC<ArtFrameProps> = ({ imageUrl, loading, frameStyle, filterPreset }) => {
-  
-  // Calculate Frame CSS
+const ArtFrame: React.FC<ArtFrameProps> = ({ imageUrl, loading, frameStyle, filterPreset, frameWidth }) => {
+
+  // Calculate Frame CSS with dynamic frame width
   const frameClasses = useMemo(() => {
     const base = "relative transition-all duration-700 ease-in-out w-full h-full flex items-center justify-center overflow-hidden";
-    
+    const borderWidth = `border-[${frameWidth}px]`;
+
     switch (frameStyle) {
       case FrameStyle.ModernBlack:
-        return `${base} bg-gray-900 border-[20px] md:border-[40px] border-black shadow-2xl`;
+        return `${base} bg-gray-900 ${borderWidth} border-black shadow-2xl`;
       case FrameStyle.GalleryWhite:
-        return `${base} bg-gray-100 border-[20px] md:border-[40px] border-white shadow-[0_20px_50px_rgba(0,0,0,0.5)]`;
+        return `${base} bg-gray-100 ${borderWidth} border-white shadow-[0_20px_50px_rgba(0,0,0,0.5)]`;
       case FrameStyle.Wood:
         // Simulating wood with color for simplicity
-        return `${base} bg-[#2c1b10] border-[20px] md:border-[40px] border-[#5c4033] outline outline-2 outline-[#3e2b22] shadow-2xl`;
+        return `${base} bg-[#2c1b10] ${borderWidth} border-[#5c4033] outline outline-2 outline-[#3e2b22] shadow-2xl`;
       case FrameStyle.None:
       default:
         return `${base} bg-black`;
     }
-  }, [frameStyle]);
+  }, [frameStyle, frameWidth]);
 
   // Calculate Image Filters based on Preset
   const filterStyle = useMemo(() => {
     let filterString = '';
-    
+
     switch (filterPreset) {
       case FilterPreset.Noir:
         filterString = 'grayscale(100%) contrast(120%) brightness(90%)';
@@ -70,17 +72,17 @@ const ArtFrame: React.FC<ArtFrameProps> = ({ imageUrl, loading, frameStyle, filt
     <div className={`w-full h-full flex items-center justify-center ${frameStyle === FrameStyle.None ? '' : 'p-4 md:p-12'}`}>
       <div className={frameClasses}>
         <div className={`w-full h-full relative flex items-center justify-center ${matteStyle}`}>
-          {/* Image Container - optimized for 4:3 aspect ratio viewing */}
-          <div className="relative w-full h-full max-w-full max-h-full flex items-center justify-center overflow-hidden bg-black/50">
+          {/* Image Container - fullscreen landscape display */}
+          <div className="relative w-full h-full flex items-center justify-center overflow-hidden bg-black">
             {imageUrl && (
-               <img
-               src={imageUrl}
-               alt="Art"
-               className={`max-w-full max-h-full object-contain transition-opacity duration-1000 ${loading ? 'opacity-50 blur-sm scale-105' : 'opacity-100 scale-100'}`}
-               style={filterStyle}
-             />
+              <img
+                src={imageUrl}
+                alt="Art"
+                className={`w-full h-full object-cover transition-opacity duration-1000 ${loading ? 'opacity-50 blur-sm scale-105' : 'opacity-100 scale-100'}`}
+                style={filterStyle}
+              />
             )}
-            
+
             {/* Loading Indicator */}
             {loading && !imageUrl && (
               <div className="absolute inset-0 flex items-center justify-center text-white/30 animate-pulse">

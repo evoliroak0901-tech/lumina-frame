@@ -9,7 +9,8 @@ const INITIAL_CONFIG: AppConfig = {
   interval: 30,
   isSlideshow: false, // Default to single image mode
   frameStyle: FrameStyle.None,
-  filterPreset: FilterPreset.Original
+  filterPreset: FilterPreset.Original,
+  frameWidth: 20 // Default frame width in pixels
 };
 
 const App: React.FC = () => {
@@ -141,6 +142,7 @@ const App: React.FC = () => {
         loading={loading}
         frameStyle={config.frameStyle}
         filterPreset={config.filterPreset}
+        frameWidth={config.frameWidth}
       />
 
       {/* Control Layer */}

@@ -13,14 +13,14 @@ export const generateArtImage = async (genre: Genre): Promise<string | null> => 
     // This ensures we get different images even for the same genre
     const cacheBuster = Math.floor(Math.random() * 100000);
     const seed = `${genre.replace(/\s+/g, '-')}-${cacheBuster}`;
-    
-    // 4:3 Aspect Ratio (e.g., 1600x1200)
-    const width = 1600;
-    const height = 1200;
+
+    // 16:9 Aspect Ratio for landscape display (1920x1080)
+    const width = 1920;
+    const height = 1080;
 
     // Use Picsum with seed for deterministic random images
     const imageUrl = `https://picsum.photos/seed/${seed}/${width}/${height}`;
-    
+
     return imageUrl;
   } catch (error) {
     console.error("Image generation failed:", error);
@@ -32,5 +32,5 @@ export const generateArtImage = async (genre: Genre): Promise<string | null> => 
  * Generates a title (Static fallback as API is disabled)
  */
 export const generateTitle = async (genre: Genre): Promise<string> => {
-   return `${genre} Collection`;
+  return `${genre} Collection`;
 }

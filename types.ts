@@ -30,6 +30,7 @@ export interface AppConfig {
   isSlideshow: boolean;
   frameStyle: FrameStyle;
   filterPreset: FilterPreset;
+  frameWidth: number; // px - border width for frames
 }
 
 export interface ArtImage {

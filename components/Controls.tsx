@@ -43,8 +43,11 @@ const Controls: React.FC<ControlsProps> = ({ visible, config, onUpdate, onIntera
         {/* Close Button */}
         {onClose && (
           <button
-            onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors active:scale-95 z-10"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors active:scale-95 z-10 cursor-pointer"
             aria-label="Close menu"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -135,6 +138,25 @@ const Controls: React.FC<ControlsProps> = ({ visible, config, onUpdate, onIntera
                   ))}
                 </div>
               </div>
+
+              {/* Frame Width Slider - Only show if frame is not None */}
+              {config.frameStyle !== FrameStyle.None && (
+                <div className="animate-fade-in">
+                  <label className="text-xs text-gray-500 uppercase tracking-widest mb-3 block flex items-center justify-between">
+                    <span>Frame Width</span>
+                    <span className="text-white">{config.frameWidth}px</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="5"
+                    max="100"
+                    step="5"
+                    value={config.frameWidth}
+                    onChange={(e) => onUpdate({ frameWidth: parseInt(e.target.value) })}
+                    className="w-full h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                  />
+                </div>
+              )}
 
               {/* Interval Slider - Only show if slideshow is enabled */}
               {config.isSlideshow && (
