@@ -74,7 +74,7 @@ const ArtFrame: React.FC<ArtFrameProps> = ({ imageUrl, loading, frameStyle, filt
 
   return (
     <div
-      className="w-full h-full flex items-center justify-center transition-[filter] duration-200"
+      className="w-full h-full flex items-center justify-center"
       style={{ filter: `brightness(${brightness})` }}
     >
       <div className={frameClasses}>
