@@ -17,7 +17,7 @@ const App: React.FC = () => {
   const [currentImage, setCurrentImage] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [showControls, setShowControls] = useState<boolean>(false);
-  
+
   // Refs for timers and wake lock
   const slideshowTimerRef = useRef<number | null>(null);
   const controlsTimerRef = useRef<number | null>(null);
@@ -37,14 +37,14 @@ const App: React.FC = () => {
     };
 
     requestWakeLock();
-    
+
     // Re-acquire on visibility change (e.g. switching tabs/apps)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         requestWakeLock();
       }
     };
-    
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
@@ -85,13 +85,13 @@ const App: React.FC = () => {
   useEffect(() => {
     // Trigger initial load if no image is present, regardless of slideshow setting
     if (!currentImage && !isGeneratingRef.current) {
-        loadNewImage();
+      loadNewImage();
     }
 
     if (config.isSlideshow) {
       // Clear existing
       if (slideshowTimerRef.current) clearInterval(slideshowTimerRef.current);
-      
+
       // Set interval
       slideshowTimerRef.current = window.setInterval(() => {
         loadNewImage();
@@ -109,9 +109,9 @@ const App: React.FC = () => {
   // --- USER INTERACTION ---
   const handleInteraction = () => {
     setShowControls(true);
-    
+
     if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
-    
+
     // Auto hide after 4 seconds of inactivity
     controlsTimerRef.current = window.setTimeout(() => {
       setShowControls(false);
@@ -121,35 +121,36 @@ const App: React.FC = () => {
   const updateConfig = (newConfig: Partial<AppConfig>) => {
     setConfig(prev => ({ ...prev, ...newConfig }));
     handleInteraction(); // Keep controls alive while interacting
-    
+
     // If genre changed, load immediately to give feedback
     if (newConfig.genre && newConfig.genre !== config.genre) {
-       // Short timeout to allow state to settle
-       setTimeout(() => loadNewImage(), 100);
+      // Short timeout to allow state to settle
+      setTimeout(() => loadNewImage(), 100);
     }
   };
 
   return (
-    <div 
+    <div
       className="relative w-screen h-screen bg-black overflow-hidden cursor-none"
       onClick={handleInteraction}
       onTouchStart={handleInteraction}
     >
       {/* Main View */}
-      <ArtFrame 
-        imageUrl={currentImage} 
+      <ArtFrame
+        imageUrl={currentImage}
         loading={loading}
         frameStyle={config.frameStyle}
         filterPreset={config.filterPreset}
       />
 
       {/* Control Layer */}
-      <Controls 
-        visible={showControls} 
-        config={config} 
+      <Controls
+        visible={showControls}
+        config={config}
         onUpdate={updateConfig}
         onInteraction={handleInteraction}
         onNext={loadNewImage}
+        onClose={() => setShowControls(false)}
       />
     </div>
   );

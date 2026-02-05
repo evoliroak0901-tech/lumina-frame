@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { AppConfig, FrameStyle, Genre, FilterPreset } from '../types';
-import { 
-  Palette, 
-  Layout, 
-  Play, 
-  Pause, 
+import {
+  Palette,
+  Layout,
+  Play,
+  Pause,
   Sun,
   ImageIcon
 } from './Icon';
@@ -15,9 +15,10 @@ interface ControlsProps {
   onUpdate: (newConfig: Partial<AppConfig>) => void;
   onInteraction: () => void;
   onNext: () => void;
+  onClose?: () => void;
 }
 
-const Controls: React.FC<ControlsProps> = ({ visible, config, onUpdate, onInteraction, onNext }) => {
+const Controls: React.FC<ControlsProps> = ({ visible, config, onUpdate, onInteraction, onNext, onClose }) => {
   const [activeTab, setActiveTab] = useState<'genre' | 'style' | 'filter'>('genre');
 
   // Prevent clicks from propagating to the dismiss handler
@@ -29,7 +30,7 @@ const Controls: React.FC<ControlsProps> = ({ visible, config, onUpdate, onIntera
   if (!visible) return null;
 
   return (
-    <div 
+    <div
       className={`fixed bottom-0 left-0 right-0 z-50 transition-transform duration-500 ease-in-out ${visible ? 'translate-y-0' : 'translate-y-full'}`}
       onClick={handleContainerClick}
     >
@@ -38,25 +39,39 @@ const Controls: React.FC<ControlsProps> = ({ visible, config, onUpdate, onIntera
 
       {/* Content */}
       <div className="relative safe-area-padding pb-8 pt-4 px-6 md:px-12 text-white/90 max-w-4xl mx-auto">
-        
+
+        {/* Close Button */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-colors active:scale-95 z-10"
+            aria-label="Close menu"
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <line x1="2" y1="2" x2="14" y2="14" />
+              <line x1="14" y1="2" x2="2" y2="14" />
+            </svg>
+          </button>
+        )}
+
         {/* Top Bar: Play/Pause, Next & Tab Selectors */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex space-x-6">
-             <button 
+            <button
               onClick={() => setActiveTab('genre')}
               className={`flex flex-col items-center space-y-1 transition-colors ${activeTab === 'genre' ? 'text-blue-400' : 'text-gray-500 hover:text-white'}`}
             >
               <Layout size={20} />
               <span className="text-[10px] uppercase tracking-wider">Genre</span>
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('style')}
               className={`flex flex-col items-center space-y-1 transition-colors ${activeTab === 'style' ? 'text-blue-400' : 'text-gray-500 hover:text-white'}`}
             >
               <Palette size={20} />
               <span className="text-[10px] uppercase tracking-wider">Style</span>
             </button>
-            <button 
+            <button
               onClick={() => setActiveTab('filter')}
               className={`flex flex-col items-center space-y-1 transition-colors ${activeTab === 'filter' ? 'text-blue-400' : 'text-gray-500 hover:text-white'}`}
             >
@@ -66,8 +81,8 @@ const Controls: React.FC<ControlsProps> = ({ visible, config, onUpdate, onIntera
           </div>
 
           <div className="flex items-center space-x-3">
-             {/* Manual Next Button (useful when slideshow is off) */}
-             <button 
+            {/* Manual Next Button (useful when slideshow is off) */}
+            <button
               onClick={onNext}
               className="flex items-center space-x-2 bg-white/10 px-4 py-2 rounded-full hover:bg-white/20 transition active:scale-95"
             >
@@ -75,7 +90,7 @@ const Controls: React.FC<ControlsProps> = ({ visible, config, onUpdate, onIntera
               <span className="text-xs font-medium">NEXT</span>
             </button>
 
-            <button 
+            <button
               onClick={() => onUpdate({ isSlideshow: !config.isSlideshow })}
               className={`flex items-center justify-center w-10 h-10 rounded-full transition active:scale-95 ${config.isSlideshow ? 'bg-blue-500/20 text-blue-400' : 'bg-white/10 hover:bg-white/20'}`}
             >
@@ -86,7 +101,7 @@ const Controls: React.FC<ControlsProps> = ({ visible, config, onUpdate, onIntera
 
         {/* Dynamic Content Panel */}
         <div className="min-h-[140px]">
-          
+
           {/* GENRE TAB */}
           {activeTab === 'genre' && (
             <div className="grid grid-cols-3 gap-2 md:grid-cols-6">
@@ -128,10 +143,10 @@ const Controls: React.FC<ControlsProps> = ({ visible, config, onUpdate, onIntera
                     <span>Change Every</span>
                     <span className="text-white">{config.interval}s</span>
                   </label>
-                  <input 
-                    type="range" 
-                    min="5" 
-                    max="60" 
+                  <input
+                    type="range"
+                    min="5"
+                    max="60"
                     step="5"
                     value={config.interval}
                     onChange={(e) => onUpdate({ interval: parseInt(e.target.value) })}
@@ -153,14 +168,14 @@ const Controls: React.FC<ControlsProps> = ({ visible, config, onUpdate, onIntera
                     onClick={() => onUpdate({ filterPreset: preset })}
                     className={`px-3 py-4 rounded-lg text-xs font-medium border transition-all flex flex-col items-center space-y-1 ${config.filterPreset === preset ? 'border-blue-500 bg-blue-500/20 text-blue-400' : 'border-white/10 bg-white/5 text-gray-400 hover:bg-white/10'}`}
                   >
-                    <div className={`w-4 h-4 rounded-full border border-white/20 mb-1`} 
-                         style={{ 
-                            background: preset === FilterPreset.Original ? '#fff' : 
-                                        preset === FilterPreset.Noir ? '#333' : 
-                                        preset === FilterPreset.Vivid ? '#f0f' : 
-                                        preset === FilterPreset.Warm ? '#fb3' : 
-                                        preset === FilterPreset.Cool ? '#3bf' : '#888'
-                         }} 
+                    <div className={`w-4 h-4 rounded-full border border-white/20 mb-1`}
+                      style={{
+                        background: preset === FilterPreset.Original ? '#fff' :
+                          preset === FilterPreset.Noir ? '#333' :
+                            preset === FilterPreset.Vivid ? '#f0f' :
+                              preset === FilterPreset.Warm ? '#fb3' :
+                                preset === FilterPreset.Cool ? '#3bf' : '#888'
+                      }}
                     />
                     <span>{preset}</span>
                   </button>
