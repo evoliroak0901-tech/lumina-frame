@@ -236,20 +236,23 @@ const App: React.FC = () => {
     if (!touchStartRef.current) return;
 
     const touch = e.touches[0];
-    const deltaY = touchStartRef.current.y - touch.clientY; // Up is positive
-    const deltaX = touch.clientX - touchStartRef.current.x;
-
     // Check if swipe started on the right side ( > 60% of width )
     const isRightSide = touchStartRef.current.x > window.innerWidth * 0.6;
 
-    // Brightness Control: Vertical swipe on right side
-    // Threshold: Move sufficient distance to be considered a swipe, and mainly vertical
-    if (isRightSide && Math.abs(deltaY) > 10 && Math.abs(deltaY) > Math.abs(deltaX)) {
-      const change = deltaY / 300; // Sensitivity 
-      let newBrightness = initialBrightnessRef.current + change;
+    if (isRightSide) {
+      // Calculate brightness based on absolute Y position
+      // Top of screen (Y=0) = Max Brightness
+      // Bottom of screen (Y=Height) = Min Brightness
+      const height = window.innerHeight;
+      const ratio = Math.max(0, Math.min(1, touch.clientY / height));
 
-      // Clamp between 0.1 and 2.0
-      newBrightness = Math.max(0.1, Math.min(2.0, newBrightness));
+      // Map 0..1 to Brightness range (2.0 .. 0.1)
+      // ratio 0 (top) -> 2.0
+      // ratio 1 (bottom) -> 0.1
+      const minBrightness = 0.1;
+      const maxBrightness = 2.0;
+
+      const newBrightness = minBrightness + (maxBrightness - minBrightness) * (1 - ratio);
 
       setConfig(prev => ({ ...prev, brightness: newBrightness }));
     }
